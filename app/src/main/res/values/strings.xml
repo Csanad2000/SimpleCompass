@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">SimpleCompass</string>
     <string name="incompatible">Your device is not capable of functioning as a compass.</string>
-    <string name="gyroUnreliable">Your device\'s gyroscope is unreliable.</string>
+    <string name="accelUnreliable">Your device\'s accelerometer is unreliable.</string>
     <string name="magnetoUnreliable">Your device\'s magnetometer is unreliable.</string>
 </resources>

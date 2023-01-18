@@ -12,43 +12,38 @@ import android.widget.TextView
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var manager: SensorManager
-    private var rotation: Sensor? = null
-    private var georotation: Sensor? = null
-    private var used = -1
-    private var chooseable = false
-    private var changed = false
+    private var accelerometer:Sensor?=null
+    private var magnetometer:Sensor?=null
 
+    private val accelerometerReading = FloatArray(3)
+    private val magnetometerReading = FloatArray(3)
+
+    private val rotationMatrix = FloatArray(9)
+    private val orientationAngles = FloatArray(3)
+
+    private lateinit var pin:ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         manager = getSystemService(SensorManager::class.java)
-        rotation = manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-        georotation = manager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+        accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        magnetometer = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
-        if (rotation != null) {
-            used = Sensor.TYPE_ROTATION_VECTOR //refactor so used is a reference to a sensor
-        }
-        if (georotation != null) {
-            if (used == Sensor.TYPE_ROTATION_VECTOR) chooseable = true
-            used = Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR
-        }
-        if (used == -1) {
-            findViewById<ImageView>(R.id.pinImage).visibility = View.INVISIBLE
+        pin = findViewById(R.id.pinImage)
+
+        if (accelerometer == null || magnetometer == null) {
+            pin.visibility = View.INVISIBLE
             findViewById<TextView>(R.id.incompatible).visibility = View.VISIBLE
         }
     }
 
     override fun onResume() {
         super.onResume()
-        when (used) {
-            Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> {
-                manager.registerListener(this, georotation, SensorManager.SENSOR_DELAY_UI)
-            }
-            Sensor.TYPE_ROTATION_VECTOR -> {
-                manager.registerListener(this, rotation, SensorManager.SENSOR_DELAY_UI)
-            }
+        if (accelerometer != null && magnetometer != null){
+            manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
+            manager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
@@ -59,52 +54,24 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            //event.values
-            //TODO draw the compass
+            if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+            } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+                System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+            }
+            //Could be made less frequent?
+            updateOrientationAngles()
+            pin.rotation = orientationAngles[0] //TODO make right conversion, what is it giving me?
         }
     }
 
-    //intent is to use the not unreliable option TODO give user the option to switch
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        if (accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
-            when (used) {
-                Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> {
-                    findViewById<TextView>(R.id.magnetoUnreliable).visibility = View.VISIBLE
-                }
-                Sensor.TYPE_ROTATION_VECTOR -> {
-                    findViewById<TextView>(R.id.gyroUnreliable).visibility = View.VISIBLE
-                }
-            }
-
-            if (chooseable&&!changed) { //TODO make sure this is not called repeatedly, currently bootleg
-                changed = true
-                switch()
-            }
-        } else {
-            when (used) {
-                Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> {
-                    findViewById<TextView>(R.id.magnetoUnreliable).visibility = View.INVISIBLE
-                }
-                Sensor.TYPE_ROTATION_VECTOR -> {
-                    findViewById<TextView>(R.id.gyroUnreliable).visibility = View.INVISIBLE
-                }
-            }
-            changed = false
-        }
+        //TODO figure out a way to efficiently inform user, maybe at redraw?
     }
 
-    private fun switch() {
-        when (used) {
-            Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> {
-                used = Sensor.TYPE_ROTATION_VECTOR
-                manager.unregisterListener(this, georotation)
-                manager.registerListener(this, rotation, SensorManager.SENSOR_DELAY_UI)
-            }
-            Sensor.TYPE_ROTATION_VECTOR -> {
-                used = Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR
-                manager.unregisterListener(this, rotation)
-                manager.registerListener(this, georotation, SensorManager.SENSOR_DELAY_UI)
-            }
-        }
+    //call before drawing for accurate info
+    private fun updateOrientationAngles() {
+        SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading)
+        SensorManager.getOrientation(rotationMatrix, orientationAngles)
     }
 }
