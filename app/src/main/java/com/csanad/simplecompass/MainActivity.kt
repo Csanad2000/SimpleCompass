@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import java.lang.Math.toDegrees
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var manager: SensorManager
@@ -42,8 +43,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onResume() {
         super.onResume()
         if (accelerometer != null && magnetometer != null){
-            manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
-            manager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI)
+            manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+            manager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL)
         }
     }
 
@@ -59,9 +60,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
                 System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
             }
-            //Could be made less frequent?
             updateOrientationAngles()
-            pin.rotation = orientationAngles[0] //TODO make right conversion, what is it giving me?
+            pin.rotation = (-toDegrees(orientationAngles[0].toDouble())).toFloat()
         }
     }
 
