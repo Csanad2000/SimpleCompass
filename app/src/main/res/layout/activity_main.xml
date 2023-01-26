@@ -21,7 +21,7 @@
         android:id="@+id/instruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hold your phone with the top edge of the screen away from you, then turn until the compass points upwards.\nThat direction is north."
+        android:text="@string/instruction"
         app:layout_constraintBottom_toTopOf="@+id/pinImage"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"

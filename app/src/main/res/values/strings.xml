@@ -3,4 +3,5 @@
     <string name="incompatible">Your device is not capable of functioning as a compass.</string>
     <string name="accelUnreliable">Your device\'s accelerometer is unreliable.</string>
     <string name="magnetoUnreliable">Your device\'s magnetometer is unreliable.</string>
+    <string name="instruction">Hold your phone with the top edge of the screen away from you, then turn until the compass points towards it.\nThat direction is north.</string>
 </resources>
